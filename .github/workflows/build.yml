@@ -23,7 +23,7 @@ jobs:
       - name: Build AppImage
         env:
           VERSION: ${{ inputs.version }}
-        run: ./build.sh
+        run: bash ./build.sh
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
