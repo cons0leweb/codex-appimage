@@ -1,0 +1,48 @@
+name: Build AppImage
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Optional ChatGPT desktop package version; blank = current stable"
+        required: false
+        type: string
+  schedule:
+    - cron: "17 6 * * *"
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-x86_64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build AppImage
+        env:
+          VERSION: ${{ inputs.version }}
+        run: ./build.sh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatgpt-codex-appimage-x86_64
+          path: "ChatGPT-Codex-*.AppImage"
+
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build-x86_64
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: chatgpt-codex-appimage-x86_64
+          path: dist
+      - name: Create rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: appimage-latest
+          name: ChatGPT/Codex AppImage latest
+          prerelease: true
+          files: dist/*.AppImage
